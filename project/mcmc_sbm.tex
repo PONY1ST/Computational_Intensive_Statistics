@@ -1,0 +1,286 @@
+%Basic constructions like size and language :
+\documentclass[12pt]{report}
+\usepackage[utf8]{inputenc}
+\usepackage{CJKutf8} %Chinese, support of begin cjk end cjk
+\usepackage[T1]{fontenc} %French
+\usepackage[letterpaper, margin=1.27cm]{geometry}
+\setlength{\emergencystretch}{3em} %the very wide text block needs slack to avoid overfull lines
+\usepackage{subfiles} 
+\usepackage{times} %Times New Roman font
+
+%References:
+\usepackage[round]{natbib} %author-year citations, loaded before hyperref
+
+%Make title, table of contents
+\usepackage{hyperref} %necessay for maketitle to work
+\hypersetup{colorlinks=true, allcolors=blue} %all links and citations in blue
+\usepackage{datetime2} %for the dtmnow command
+
+\title{Casual Document for 
+Quantitative Mixing Time Results for Single Site Gibbs in Stochastic Block Model}
+\author{Wen, Zehai; Cesare, Michael}
+\date{\DTMnow}
+
+%Page style, header and footer:
+\usepackage{fancyhdr}
+
+\pagestyle{fancy}
+\setlength{\headheight}{14.5pt}
+\addtolength{\topmargin}{-2.5pt}
+\fancyhf{}
+\lhead{
+Wen, Zehai; Cesare, Michael}
+\rhead{\today}
+
+\rfoot{}
+\cfoot{\thepage}
+
+%Graphics and figures:
+\usepackage{graphicx} 
+\usepackage{float} %both graphicx and float packages are necessary for begin figure
+\usepackage{caption} %necessary for any kind of caption
+\usepackage{subcaption} %necessary for subfigure
+
+%Tabular:
+\usepackage{multirow}
+
+%Coding:
+\usepackage{listings}
+\usepackage{color}
+
+\lstset{literate=%
+  {é}{{\'e}}{1}%
+  {è}{{\`e}}{1}%
+  {à}{{\`a}}{1}%
+  {ç}{{\c{c}}}{1}%
+  {œ}{{\oe}}{1}%
+  {ù}{{\`u}}{1}%
+  {É}{{\'E}}{1}%
+  {È}{{\`E}}{1}%
+  {À}{{\`A}}{1}%
+  {Ç}{{\c{C}}}{1}%
+  {Œ}{{\OE}}{1}%
+  {Ê}{{\^E}}{1}%
+  {ê}{{\^e}}{1}%
+  {î}{{\^i}}{1}%
+  {ô}{{\^o}}{1}%
+  {û}{{\^u}}{1}%
+  {ä}{{\"{a}}}1
+  {ë}{{\"{e}}}1
+  {ï}{{\"{i}}}1
+  {ö}{{\"{o}}}1
+  {ü}{{\"{u}}}1
+  {û}{{\^{u}}}1
+  {â}{{\^{a}}}1
+  {Â}{{\^{A}}}1
+  {Î}{{\^{I}}}1
+} 
+
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+
+\lstset{frame=tb,
+  language=Java,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=none,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+%Graph Theory:
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta}
+
+%Commands :
+\newcommand\tab[1][1cm]{\hspace*{#1}}
+\renewcommand{\bibname}{Références}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%Mathematical packages%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%Basic utilities:
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{physics} %for vector symbol
+\usepackage{bm} %for bm
+
+%Commands :
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+\newcommand{\bracket}[1]{\left ( #1 \right )}
+\newcommand{\curly}[1]{\left \{ #1 \right \} }
+\newcommand{\squared}[1]{\left [ #1 \right ]}
+
+\usepackage{amsthm}  %Theorem styles
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition} 
+\newtheorem{definitions}[theorem]{Definitions} 
+\newtheorem{example}[theorem]{Example}
+\newtheorem{examples}[theorem]{Examples}
+\newtheorem{remark}[theorem]{Remark}
+\newtheorem{remarks}[theorem]{Remarks}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+\begin{CJK*}{UTF8}{gbsn}
+\maketitle
+
+\setcounter{tocdepth}{0}
+\tableofcontents
+
+\chapter{The Stochastic Block Model and the Single Site Gibbs Method}
+
+\section{Basic Setup}\label{sec:basic_setup}
+
+The procedure of analyzing graphical data 
+using Bayesian stochastic block model with single 
+site Gibbs procedure seems to have been first 
+mentioned in \cite{Kemp_et_al_2004}
+and slightly later in \cite{Xu_et_al_2006}.
+In this section, we
+describe the simplest setup of both the model and the single site Gibbs method
+by following a tutorial article \cite{Schmidt_Morup_2013}.
+
+For the moment, 
+let us consider the simplest case where
+the graphical data received by the statistician is just
+one simple graph of $N \geqslant 3$ vertices
+labeled as $1, 2, \ldots, N$,
+represented by its adjacency matrix $X \in \{0,1\}^{N \times N}$
+where $X_{i,j} = 1$ if and only if there is an edge between vertex $i$ and vertex $j$.
+In particular, we have $X_{i,i} = 0$ for all $i$ and
+$X_{i,j} = X_{j,i}$ for all $i,j$.
+If we want to, 
+we can consider later the case which our data contains 
+multiple graphs of the same size generated independently identically distributed 
+from a distribution in the same model, but we shall not do so in this section.
+
+We assume that $X$ is generated from a distribution 
+in the (standard Bayesian) stochastic block model (SBM)
+with unknown number of blocks. 
+To describe the model, 
+let us write $\Pi$
+for the collection of all partitions of the set $\{1, 2, \ldots, N\}$
+and represent
+any element $z \in \Pi$ using the \textit{restricted growth string} notation,
+meaning that we see $z$ 
+as a vector $z = (z_1, z_2, \ldots, z_N)$
+where $z_i$ denotes the block to which vertex $i$ belongs,
+such that the classes are ordered as they first appear: $z_1 = 1$
+and, for every $i \in \{2, 3, \ldots, N\}$, we have
+
+\begin{equation*}
+  z_i \in \curly{1, 2, \ldots, 1 + \max_{j < i} z_j}.
+\end{equation*}
+For example, if $N = 5$ and the partition is $z = \{\{1, 3\}, \{2\}, \{4, 5\}\}$,
+then we write $z = (1, 2, 1, 3, 3)$.
+As derived in \cite{Schmidt_Morup_2013},
+(the standard Bayesian)
+SBM is a parameteric model for the matrix $X$ whose only
+parameter is $z$, ranged over $\Pi$,
+with density function is given by 
+
+\begin{equation}\label{eq:SBM_density}
+  p(X \mid z) =
+  \prod_{1 \leqslant k \leqslant l \leqslant K} 
+  \frac{B(m_{k,l}+a, \bar{m}_{k,l}+b)}{B(a,b)},
+\end{equation}
+where $a > 0$ and $b > 0$ are hyperparameters fixed by the 
+statistician, $B(\cdot, \cdot)$ is the beta function,
+$K$ is the number of non-empty blocks as specified by $z$,
+$m_{k,l}$ is the number of edges between block $k$ and block $l$,
+and $\bar{m}_{k,l}$ is the number of non-edges between block $k$ and block $l$.
+
+(Actually, just as in \cite{Schmidt_Morup_2013}, 
+we have abused the notation a bit in \eqref{eq:SBM_density}.
+Given that $X$ is symmetric with diagonal entries equal to $0$,
+we are only interested in the vector $(X_{i,j})_{1 \leqslant i < j \leqslant N}$
+and we have written $p(X \mid z)$ 
+in place of $p((X_{i,j})_{1 \leqslant i < j \leqslant N} \mid z)$.)
+
+In order to do Bayesian statistics, 
+we have to specify a prior distribution for $z$.
+As pointed out in \cite{Schmidt_Morup_2013},
+we will use the Chinese restaurant process (CRP) prior for $z$.
+With a hyperparameter $A > 0$ fixed by the statistician,
+$\text{CRP}(A)$ is a probability measure on $\Pi$ defined as 
+follows: $z_1 \equiv 1$ and, for every $i \in \{2, 3, \ldots, N\}$,
+given $z_1, z_2, \ldots, z_{i-1}$ who have already used a total of 
+$K^{(i-1)}$ blocks, 
+$z_i$ will join an existing block $k \in \{1, 2, \ldots, K^{(i-1)}\}$ with probability
+
+\begin{equation*}
+  \frac{n_k^{(i-1)}}{A + i - 1},
+\end{equation*}
+where $n_k^{(i-1)}$ is the number of vertices among $1, 2, \ldots, i-1$
+who have been assigned to block $k$,
+and will create a new block $K^{(i-1)} + 1$ with probability
+
+\begin{equation*}
+  \frac{A}{A + i - 1}.
+\end{equation*}
+$\text{CRP}(A)$ does have a clean joint density (with respect to the counting measure on $\Pi$)
+
+\begin{equation}\label{eq:CRP_density}
+ p(z) = \frac{A^{K} \Gamma(A)}{\Gamma(A + N)} \prod_{k=1}^{K} \Gamma(n_k),
+\end{equation}
+where $K$ is the number of non-empty blocks as specified by $z$,
+$n_k$ is the number of vertices assigned to block $k$ according to $z$,
+and $\Gamma(\cdot)$ is the gamma function.
+
+By Bayes's theorem, according to \eqref{eq:SBM_density}
+and \eqref{eq:CRP_density},
+the posterior distribution of $z$ given $X$ is
+
+\begin{equation*}
+  p(z \mid X) \propto p(X \mid z) p(z)
+  = \squared{
+  \prod_{1 \leqslant k \leqslant l \leqslant K}
+  \frac{B(m_{k,l}+a, \bar{m}_{k,l}+b)}{B(a,b)}}
+  \squared{\frac{A^{K} \Gamma(A)}{\Gamma(A + N)} \prod_{k=1}^{K} \Gamma(n_k)}.
+\end{equation*}
+We now move to carry out the single site Gibbs method.
+For every $i \in \{1, 2, \ldots, N\}$,
+let $z^{(-i)}$ denote the vector $(z_1, z_2, \ldots, z_{i-1}, z_{i+1}, \ldots, z_N)$
+obtained from $z$ by removing the $i$-th entry.
+We need to compute, for every $i \in \{1, 2, \ldots, N\}$,
+what's proportional to
+
+\begin{equation*}
+  p(z_i \mid z^{(-i)}, X).
+\end{equation*}
+Therefore, for each $k \in \{1, 2, \ldots, K^{(-i)}\}$,
+where $K^{(-i)}$ is the number of non-empty blocks as specified by $z^{(-i)}$,
+we must calculate $p(z_i = k \mid z^{(-i)}, X)$.
+
+
+\bibliographystyle{plainnat}
+\def\bibname{References} % Nom obligatoire de la section des références.
+                                              % On utilise \'e car le é cause des problèmes
+                                              % dans la table des matière
+%% ENGLISH
+ %\def\bibname{References}
+\bibliography{reference.bib}     % La base de données contenant des entrées bibliographiques.
+                                    % Seules celles référencées dans le texte seront ajoutées
+                                    % \`a la bibliographie.
+
+\end{CJK*}
+\end{document}

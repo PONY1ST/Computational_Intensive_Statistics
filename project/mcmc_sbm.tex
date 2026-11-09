@@ -271,6 +271,281 @@ Therefore, for each $k \in \{1, 2, \ldots, K^{(-i)}\}$,
 where $K^{(-i)}$ is the number of non-empty blocks as specified by $z^{(-i)}$,
 we must calculate $p(z_i = k \mid z^{(-i)}, X)$.
 
+\section{Gibbs Draft}
+
+In this section we explain how we understand the conditional distribution
+$p(z_i \mid z^{(-i)}, X)$ used by the single site Gibbs method,
+given that $z$ ranges over the set of partitions $\Pi$
+rather than over a product space such as $\mathbb{R}^N$.
+Throughout the section,
+we fix a vertex $i \in \{1, 2, \ldots, N\}$
+and we regard every $z \in \Pi$ as a set of blocks,
+each block being a non-empty subset of $\{1, 2, \ldots, N\}$.
+The restricted growth string notation is only used to write down
+a partition after it has been updated;
+it plays no role in the update itself.
+
+\subsection*{The partition of the other vertices and where vertex $i$ goes}
+
+Let $\Pi^{(-i)}$ denote the collection of all partitions of the set
+$\{1, 2, \ldots, N\} \setminus \{i\}$.
+Every $z \in \Pi$ induces a partition of the other $N - 1$ vertices,
+namely its restriction
+
+\begin{equation*}
+  T_i(z) = \curly{C \setminus \{i\} : C \in z} \setminus \curly{\varnothing}
+  \in \Pi^{(-i)}.
+\end{equation*}
+For $\rho \in \Pi^{(-i)}$ with $K_\rho$ blocks $B_1, B_2, \ldots, B_{K_\rho}$,
+which we name by their vertex sets rather than by integer labels,
+let
+
+\begin{equation*}
+  \mathcal{C}_\rho = \curly{B_1, B_2, \ldots, B_{K_\rho}, \mathrm{new}}
+\end{equation*}
+be the set of the $K_\rho + 1$ options for vertex $i$:
+join one of the existing blocks of $\rho$, or start a new block.
+For $c \in \mathcal{C}_\rho$, we write $\rho \oplus_i c \in \Pi$
+for the partition obtained from $\rho$ by putting $i$ into $c$, that is,
+
+\begin{equation*}
+  \rho \oplus_i B_k = \bracket{\rho \setminus \{B_k\}} \cup \curly{B_k \cup \{i\}}
+  \quad \text{for } k \in \{1, 2, \ldots, K_\rho\},
+  \qquad
+  \rho \oplus_i \mathrm{new} = \rho \cup \curly{\{i\}}.
+\end{equation*}
+
+\begin{lemma}\label{lem:gibbs_bijection}
+The map $(\rho, c) \mapsto \rho \oplus_i c$ is a bijection from
+$\curly{(\rho, c) : \rho \in \Pi^{(-i)},\ c \in \mathcal{C}_\rho}$
+onto $\Pi$.
+Its inverse sends $z \in \Pi$ to $(T_i(z), c_i(z))$,
+where, writing $C$ for the block of $z$ containing $i$,
+we set $c_i(z) = C \setminus \{i\}$ if $C \neq \{i\}$
+and $c_i(z) = \mathrm{new}$ if $C = \{i\}$.
+\end{lemma}
+
+\begin{proof}
+For every $\rho \in \Pi^{(-i)}$ and $c \in \mathcal{C}_\rho$,
+removing $i$ from $\rho \oplus_i c$ gives back $\rho$,
+and the block of $\rho \oplus_i c$ containing $i$ is $c \cup \{i\}$
+if $c \neq \mathrm{new}$ and $\{i\}$ if $c = \mathrm{new}$,
+so $T_i(\rho \oplus_i c) = \rho$ and $c_i(\rho \oplus_i c) = c$.
+Conversely, for every $z \in \Pi$,
+putting $i$ back into $c_i(z)$ recovers $z$,
+so $T_i(z) \oplus_i c_i(z) = z$.
+\end{proof}
+
+In the coordinates given by Lemma~\ref{lem:gibbs_bijection},
+$\rho = T_i(z)$ plays the role of $z^{(-i)}$
+and $c = c_i(z)$ plays the role of $z_i$.
+Accordingly, for $\rho \in \Pi^{(-i)}$ and $c \in \mathcal{C}_\rho$, we define
+
+\begin{equation}\label{eq:gibbs_conditional}
+  p(z_i = c \mid z^{(-i)} = \rho, X)
+  = \frac{p(\rho \oplus_i c \mid X)}
+  {\sum_{c' \in \mathcal{C}_\rho} p(\rho \oplus_i c' \mid X)}
+  \propto p(X \mid \rho \oplus_i c)\, p(\rho \oplus_i c).
+\end{equation}
+This is a probability distribution over the $K_\rho + 1$ options in $\mathcal{C}_\rho$,
+not over integer labels: no block label appears anywhere.
+If $i$ forms a block on its own in the current state $z$,
+then $T_i(z)$ has one block fewer than $z$
+and the current state corresponds to the option $c = \mathrm{new}$;
+this case needs no special treatment.
+
+\begin{remark}
+The single site Gibbs update for vertex $i$ is the Markov kernel on $\Pi$ given by
+
+\begin{equation*}
+  P_i(z, z') = \frac{p(z' \mid X)}{\sum_{z'' \in \Pi : T_i(z'') = T_i(z)} p(z'' \mid X)}
+  \, \mathbf{1}\curly{T_i(z') = T_i(z)},
+  \qquad z, z' \in \Pi,
+\end{equation*}
+that is, we keep $\rho = T_i(z)$ fixed and redraw $c$
+according to \eqref{eq:gibbs_conditional}.
+If $T_i(z) = T_i(z')$, then both $p(z \mid X) P_i(z, z')$ and
+$p(z' \mid X) P_i(z', z)$ are equal to $p(z \mid X) p(z' \mid X)$
+divided by the same normalizing sum,
+and otherwise both vanish.
+Hence $P_i$ is reversible with respect to $p(\cdot \mid X)$.
+No coordinates, linear structure or topology on $\Pi$ are needed for this.
+\end{remark}
+
+\subsection*{Vertex $i$ as the last vertex to arrive}
+
+For a permutation $\sigma$ of $\{1, 2, \ldots, N\}$,
+write $\sigma(z) = \curly{\sigma(C) : C \in z}$
+and let $X^\sigma$ be the adjacency matrix given by
+$X^\sigma_{\sigma(j), \sigma(l)} = X_{j,l}$.
+The CRP density \eqref{eq:CRP_density} depends on $z$ only through
+$K$ and the block sizes, so $p(\sigma(z)) = p(z)$.
+Likewise, the density \eqref{eq:SBM_density} depends on $(X, z)$ only through
+the numbers of edges and non-edges between blocks,
+which do not change when the vertices of $X$ and $z$ are permuted together,
+so $p(X^\sigma \mid \sigma(z)) = p(X \mid z)$.
+Hence the posterior does not care about the order of the vertices,
+and in \eqref{eq:gibbs_conditional} we may pretend that $i$ is the $N$-th vertex
+to arrive, even when $i = 1$.
+The computations below confirm this picture:
+the conditional distribution \eqref{eq:gibbs_conditional} factors as
+
+\begin{equation*}
+  p(z_i = c \mid z^{(-i)} = \rho, X)
+  \propto
+  \squared{\text{CRP seating probability of the last vertex}}
+  \times
+  \squared{\text{how well the edges of $i$ fit $c$}}.
+\end{equation*}
+
+\paragraph{Prior part.}
+For every block $B$ of $\rho$, write $n_B = |B|$.
+Since $\Gamma(n_B + 1) = n_B \Gamma(n_B)$ and $\Gamma(1) = 1$,
+\eqref{eq:CRP_density} gives
+
+\begin{equation*}
+  p(\rho \oplus_i B) = \frac{A^{K_\rho} \Gamma(A)}{\Gamma(A + N)}
+  \prod_{B' \in \rho} \Gamma(n_{B'}) \cdot n_B,
+  \qquad
+  p(\rho \oplus_i \mathrm{new}) = \frac{A^{K_\rho} \Gamma(A)}{\Gamma(A + N)}
+  \prod_{B' \in \rho} \Gamma(n_{B'}) \cdot A,
+\end{equation*}
+where the second identity uses that $\rho \oplus_i \mathrm{new}$
+has $K_\rho + 1$ blocks.
+Hence
+
+\begin{equation*}
+  p(\rho \oplus_i c) \propto
+  \begin{cases}
+    n_B & \text{if } c = B \in \rho, \\
+    A & \text{if } c = \mathrm{new}.
+  \end{cases}
+\end{equation*}
+Since $\sum_{B \in \rho} n_B = N - 1$,
+the normalized weights are $n_B / (A + N - 1)$ and $A / (A + N - 1)$,
+which are exactly the CRP probabilities for the $N$-th vertex
+to join block $B$ or to create a new block.
+
+\paragraph{Likelihood part.}
+Write $X^{(-i)} = (X_{j,l})_{1 \leqslant j < l \leqslant N,\ j, l \neq i}$
+for the graph with vertex $i$ removed
+and $x_i = (X_{i,j})_{j \neq i}$ for the edges of vertex $i$.
+For blocks $B, B'$ of $\rho$ (with $B = B'$ allowed),
+let $m_{B,B'}$ and $\bar{m}_{B,B'}$ be the numbers of edges and non-edges
+between $B$ and $B'$ in $X^{(-i)}$,
+where each unordered pair of distinct vertices is counted once
+(so that, when $B = B'$, these are the pairs of vertices inside $B$).
+For every block $B'$ of $\rho$, let
+
+\begin{equation*}
+  r_{B'} = \sum_{j \in B'} X_{i,j}
+\end{equation*}
+be the number of edges between $i$ and $B'$,
+so that there are $n_{B'} - r_{B'}$ non-edges between $i$ and $B'$.
+Finally, let
+
+\begin{equation*}
+  p(X^{(-i)} \mid \rho) = \prod_{\{B, B'\}}
+  \frac{B(m_{B,B'} + a, \bar{m}_{B,B'} + b)}{B(a,b)},
+\end{equation*}
+where the product ranges over all unordered pairs $\{B, B'\}$ of blocks of $\rho$
+with $B = B'$ allowed;
+this is the right-hand side of \eqref{eq:SBM_density}
+applied to the graph $X^{(-i)}$ and the partition $\rho$.
+
+\begin{proposition}\label{prop:gibbs_likelihood}
+For every block $B$ of $\rho$,
+
+\begin{equation*}
+  p(X \mid \rho \oplus_i B) = p(X^{(-i)} \mid \rho)
+  \prod_{B' \in \rho}
+  \frac{B(m_{B,B'} + r_{B'} + a, \bar{m}_{B,B'} + n_{B'} - r_{B'} + b)}
+  {B(m_{B,B'} + a, \bar{m}_{B,B'} + b)},
+\end{equation*}
+and
+
+\begin{equation*}
+  p(X \mid \rho \oplus_i \mathrm{new}) = p(X^{(-i)} \mid \rho)
+  \prod_{B' \in \rho}
+  \frac{B(r_{B'} + a, n_{B'} - r_{B'} + b)}{B(a,b)}.
+\end{equation*}
+\end{proposition}
+
+\begin{proof}
+The blocks of $\rho \oplus_i B$ are $B \cup \{i\}$ and the blocks
+$B' \neq B$ of $\rho$.
+Pairs of vertices not involving $i$ are counted exactly as in $\rho$.
+For every $B' \in \rho$, the $n_{B'}$ pairs $\{i, j\}$ with $j \in B'$
+fall into the block pair $\{B \cup \{i\}, B'\}$ if $B' \neq B$,
+and into the block pair $\{B \cup \{i\}, B \cup \{i\}\}$ if $B' = B$;
+in both cases they add $r_{B'}$ edges and $n_{B'} - r_{B'}$ non-edges
+to the counts $m_{B,B'}$ and $\bar{m}_{B,B'}$.
+So, in \eqref{eq:SBM_density}, only the factors of the block pairs
+containing $B \cup \{i\}$ change,
+there is exactly one such factor for each $B' \in \rho$,
+and dividing each new factor by the corresponding factor of $p(X^{(-i)} \mid \rho)$
+gives the first identity.
+The blocks of $\rho \oplus_i \mathrm{new}$ are $\{i\}$ and the blocks of $\rho$.
+The block pairs of $\rho$ keep their counts,
+the block pair $\{\{i\}, B'\}$ receives $r_{B'}$ edges and $n_{B'} - r_{B'}$ non-edges
+for every $B' \in \rho$,
+and the block pair $\{\{i\}, \{i\}\}$ contains no pair of vertices,
+so its factor is $B(a,b)/B(a,b) = 1$.
+This gives the second identity.
+\end{proof}
+
+The factor $p(X^{(-i)} \mid \rho)$ is the same for every $c \in \mathcal{C}_\rho$
+and therefore drops out of \eqref{eq:gibbs_conditional}.
+Since the marginal distribution of $X^{(-i)}$ under $\rho \oplus_i c$
+is the SBM with partition $\rho$
+(it only involves pairs of vertices not containing $i$),
+the remaining product is the conditional probability
+$p(x_i \mid X^{(-i)}, \rho \oplus_i c)$ of the edges of $i$ given the rest of the graph.
+Each of its factors is a Beta--Bernoulli posterior predictive probability:
+in the hierarchical formulation of \cite{Schmidt_Morup_2013},
+the link probability $\theta_{B,B'}$ between blocks $B$ and $B'$
+has prior $\text{Beta}(a,b)$,
+its posterior given $X^{(-i)}$ is $\text{Beta}(m_{B,B'} + a, \bar{m}_{B,B'} + b)$,
+and
+
+\begin{equation*}
+  \frac{B(m_{B,B'} + r_{B'} + a, \bar{m}_{B,B'} + n_{B'} - r_{B'} + b)}
+  {B(m_{B,B'} + a, \bar{m}_{B,B'} + b)}
+\end{equation*}
+is the probability, under this posterior, of the particular configuration of
+$r_{B'}$ edges and $n_{B'} - r_{B'}$ non-edges between $i$ and $B'$.
+For a new block there is no previous observation,
+so the posterior is simply the prior $\text{Beta}(a,b)$.
+These are exactly the quantities computed (on the logarithmic scale)
+in the code of \cite{Schmidt_Morup_2013}.
+
+\paragraph{Conclusion.}
+Combining the prior part with Proposition~\ref{prop:gibbs_likelihood},
+for every $\rho \in \Pi^{(-i)}$ we obtain
+
+\begin{equation}\label{eq:gibbs_conditional_explicit}
+  p(z_i = c \mid z^{(-i)} = \rho, X) \propto
+  \begin{cases}
+    \displaystyle n_B \prod_{B' \in \rho}
+    \frac{B(m_{B,B'} + r_{B'} + a, \bar{m}_{B,B'} + n_{B'} - r_{B'} + b)}
+    {B(m_{B,B'} + a, \bar{m}_{B,B'} + b)}
+    & \text{if } c = B \in \rho, \\[4ex]
+    \displaystyle A \prod_{B' \in \rho}
+    \frac{B(r_{B'} + a, n_{B'} - r_{B'} + b)}{B(a,b)}
+    & \text{if } c = \mathrm{new},
+  \end{cases}
+\end{equation}
+where the proportionality constant is fixed by summing over
+the $K_\rho + 1$ options in $\mathcal{C}_\rho$.
+In words, $p(z_i \mid z^{(-i)}, X)$ is the probability that vertex $i$
+joins each block of $\rho$, or starts a new one,
+given the partition $\rho$ of the other vertices:
+it is the CRP seating weight ($n_B$ or $A$)
+times the posterior predictive likelihood of the edges of $i$ under that choice,
+normalized over the $K_\rho + 1$ options.
+This description never uses $\mathbb{R}^N$ or block labels.
+After drawing $c$, we write the new state $\rho \oplus_i c$
+in restricted growth string notation.
 
 \bibliographystyle{plainnat}
 \def\bibname{References} % Nom obligatoire de la section des références.

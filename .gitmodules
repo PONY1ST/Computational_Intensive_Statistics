@@ -1,0 +1,6 @@
+[submodule "Image_Generation_Presentation"]
+	path = Image_Generation_Presentation
+	url = https://github.com/PONY1ST/Image_Generation_Presentation.git
+[submodule "SBM_MCMC_project"]
+	path = SBM_MCMC_project
+	url = https://github.com/PONY1ST/SBM_MCMC_project.git

@@ -148,8 +148,6 @@ Wen, Zehai; Cesare, Michael}
 
 \chapter{The Stochastic Block Model and the Single Site Gibbs Method}
 
-\section{Basic Setup}\label{sec:basic_setup}
-
 The procedure of analyzing graphical data 
 using Bayesian stochastic block model with single 
 site Gibbs procedure seems to have been first 
@@ -158,6 +156,10 @@ and slightly later in \cite{Xu_et_al_2006}.
 In this section, we
 describe the simplest setup of both the model and the single site Gibbs method
 by following a tutorial article \cite{Schmidt_Morup_2013}.
+We will fill in the missing steps and justify that the proposed method 
+is indeed the standard single site systamatic scan Gibbs method.
+
+\section{The Bayesian Stochastic Block Model}\label{sec:basic_setup}
 
 For the moment, 
 let us consider the simplest case where
@@ -173,56 +175,95 @@ we can consider later the case which our data contains
 multiple graphs of the same size generated independently identically distributed 
 from a distribution in the same model, but we shall not do so in this section.
 
-We assume that $X$ is generated from a distribution 
-in the (standard Bayesian) stochastic block model (SBM)
-with unknown number of blocks. 
 To describe the model, 
-let us write $\Pi$
-for the collection of all partitions of the set $\{1, 2, \ldots, N\}$
-and represent
-any element $z \in \Pi$ using the \textit{restricted growth string} notation,
-meaning that we see $z$ 
-as a vector $z = (z_1, z_2, \ldots, z_N)$
-where $z_i$ denotes the block to which vertex $i$ belongs,
-such that the classes are ordered as they first appear: $z_1 = 1$
+some notations have to be introduced.
+Let us write $\Theta$
+for the collection of all partitions of the set $\{1, 2, \ldots, N\}$.
+That is, each $z \in \Theta$ is a collection 
+of nonempty disjoint subsets of $\{1,\ldots, N\}$
+whose union equals to $\{1,\ldots, N\}$.
+Very frequently, we shall present 
+an element $z \in \Theta$ 
+by writing it 
+as a vector $z = (z_1, z_2, \ldots, z_N) \in \{1, \ldots, N\}^N$
+where $z_i$ denotes the block to which vertex $i$ belongs.
+For example, if $N = 5$, both 
+$z = (1, 2, 1, 3, 3)$ and $z = (5,1,5,2,2)$
+correspond to the partition $z = \{\{1, 3\}, \{2\}, \{4, 5\}\}$.
+$z$ is said to be a \textit{restricted growth string}
+if the blocks are ordered as they first appear: $z_1 \equiv 1$
 and, for every $i \in \{2, 3, \ldots, N\}$, we have
 
 \begin{equation*}
   z_i \in \curly{1, 2, \ldots, 1 + \max_{j < i} z_j}.
 \end{equation*}
-For example, if $N = 5$ and the partition is $z = \{\{1, 3\}, \{2\}, \{4, 5\}\}$,
-then we write $z = (1, 2, 1, 3, 3)$.
-As derived in \cite{Schmidt_Morup_2013},
-(the standard Bayesian)
-SBM is a parameteric model for the matrix $X$ whose only
-parameter is $z$, ranged over $\Pi$,
-with density function is given by 
+In the previous example, $(1, 2, 1, 3, 3)$ is a
+restricted growth string and the other is not.
 
-\begin{equation}\label{eq:SBM_density}
-  p(X \mid z) =
-  \prod_{1 \leqslant k \leqslant l \leqslant K} 
-  \frac{B(m_{k,l}+a, \bar{m}_{k,l}+b)}{B(a,b)},
+We assume that $X$ is generated from a distribution 
+in the (standard) stochastic block model (SBM)
+with unknown number of blocks. 
+The model contains two parameters: 
+the partition $z$ ranged over $\Theta$
+and the connectivity probabilities 
+$\phi_{k,l} \in [0,1]$, 
+where $k \in z$ and $l \in z$ are the communities.
+The model assumes that, given $z$ and $\phi$,
+independently over all other edges,
+an edge is joined between a vertex in block $k$ 
+and a vertex in block $l$ with probability $\phi_{kl}$.
+In symbols:
+
+\begin{equation}\label{eq:SBM_fundamental}
+  p \bracket{X \mid z, \phi} = \prod_{1 \leqslant i < j \leqslant N} \phi_{z_i, z_j}^{x_{ij}} (1-\phi_{z_i, z_j})^{1-x_{ij}},
 \end{equation}
-where $a > 0$ and $b > 0$ are hyperparameters fixed by the 
-statistician, $B(\cdot, \cdot)$ is the beta function,
-$K$ is the number of non-empty blocks as specified by $z$,
-$m_{k,l}$ is the number of edges between block $k$ and block $l$,
-and $\bar{m}_{k,l}$ is the number of non-edges between block $k$ and block $l$.
+where we have written $p \bracket{X \mid z, \phi}$ in place of 
+$p \bracket{(X_{i,j})_{1 \leqslant i < j \leqslant N} \mid z, \phi}$.
+Another look at \eqref{eq:SBM_fundamental}
+supply a second formula:
 
-(Actually, just as in \cite{Schmidt_Morup_2013}, 
-we have abused the notation a bit in \eqref{eq:SBM_density}.
-Given that $X$ is symmetric with diagonal entries equal to $0$,
-we are only interested in the vector $(X_{i,j})_{1 \leqslant i < j \leqslant N}$
-and we have written $p(X \mid z)$ 
-in place of $p((X_{i,j})_{1 \leqslant i < j \leqslant N} \mid z)$.)
+\begin{equation}\label{eq:SBM_kl_with_phi}
+  p \bracket{X \mid z, \phi} = \prod_{k, l \in z} \phi_{k, l}^{m_{k,l}} (1-\phi_{k, l})^{\bar{m}_{k,l}},
+\end{equation}
+where $m_{k,l}$($\bar{m}_{k,l}$) is the number of edges(non-edges) between block $k$ and block $l$,
+and, here and below, $\prod_{k, l \in z}$ runs over unordered pairs $\{k, l\}$ of blocks, including $k = l$.
 
 In order to do Bayesian statistics, 
-we have to specify a prior distribution for $z$.
-As pointed out in \cite{Schmidt_Morup_2013},
-we will use the Chinese restaurant process (CRP) prior for $z$.
+priors need to be posed for $z$ and for $\phi$.
+The standard practice for this model, as discussed in \cite{Schmidt_Morup_2013},
+is to first implement the conjugate prior for $\phi$, 
+integrate $\phi$ out to get a formula for $p \bracket{X \mid z}$,
+treat the model as if $z$ is the only parameter, give $z$ a prior distribution,
+and then carry out Markov chain Monte Carlo(MCMC)
+on the posterior distribution $p(z \mid X) \propto p(X \mid z) p(z)$.
+This is the procedure we will follow.
+
+With hyperparameters $a > 0$ and $b > 0$ fixed by the statistician,
+we require all $\phi_{k,l}$'s to have a prior distribution of $\text{Beta}(a,b)$,
+independently with respect to each other and over all other variables.
+Consequently:
+
+\begin{equation}\label{eq:SBM_density}
+  \begin{split}
+  p(X \mid z) & =  \int_{[0,1]^{\frac{\abs{z}(\abs{z}+1)}{2}}} p(X \mid z, \phi)p(\phi) \mathrm{d} \phi
+  = \int_{[0,1]^{\frac{\abs{z}(\abs{z}+1)}{2}}} 
+  \prod_{k, l \in z} \frac{1}{B(a,b)}\phi_{k, l}^{m_{k,l}+a-1} (1-\phi_{k, l})^{\bar{m}_{k,l}+b-1}  \mathrm{d} \phi
+ \\ & = \prod_{k, l \in z} \frac{1}{B(a,b)} \int_0^1 \phi_{k, l}^{m_{k,l}+a-1} (1-\phi_{k, l})^{\bar{m}_{k,l}+b-1}  \mathrm{d} \phi_{k,l}
+  \\ & =
+  \prod_{k, l \in z} 
+  \frac{B(m_{k,l}+a, \bar{m}_{k,l}+b)}{B(a,b)},
+  \end{split}
+\end{equation}
+where $B(\cdot, \cdot)$ is the beta function.
+From now on, we treat $z$ as the only parameter of the model,
+defining a density of $X$ via \eqref{eq:SBM_density}.
+As justified in \cite{Schmidt_Morup_2013},
+a commonly used prior distribution for $z$
+is known as the \textit{Chinese restaurant process (CRP)}.
 With a hyperparameter $A > 0$ fixed by the statistician,
-$\text{CRP}(A)$ is a probability measure on $\Pi$ defined as 
-follows: $z_1 \equiv 1$ and, for every $i \in \{2, 3, \ldots, N\}$,
+$\text{CRP}(A)$ is a probability measure on $\Theta$ defined as 
+follows: with restricted growth notation,
+$z_1 \equiv 1$ and, for every $i \in \{2, 3, \ldots, N\}$,
 given $z_1, z_2, \ldots, z_{i-1}$ who have already used a total of 
 $K^{(i-1)}$ blocks, 
 $z_i$ will join an existing block $k \in \{1, 2, \ldots, K^{(i-1)}\}$ with probability
@@ -237,12 +278,12 @@ and will create a new block $K^{(i-1)} + 1$ with probability
 \begin{equation*}
   \frac{A}{A + i - 1}.
 \end{equation*}
-$\text{CRP}(A)$ does have a clean joint density (with respect to the counting measure on $\Pi$)
+$\text{CRP}(A)$ does have a clean joint density (with respect to the counting measure on $\Theta$)
 
 \begin{equation}\label{eq:CRP_density}
- p(z) = \frac{A^{K} \Gamma(A)}{\Gamma(A + N)} \prod_{k=1}^{K} \Gamma(n_k),
+ p(z) = \frac{A^{\abs{z}} \Gamma(A)}{\Gamma(A + N)} \prod_{k \in z} \Gamma(n_k),
 \end{equation}
-where $K$ is the number of non-empty blocks as specified by $z$,
+where
 $n_k$ is the number of vertices assigned to block $k$ according to $z$,
 and $\Gamma(\cdot)$ is the gamma function.
 
@@ -250,302 +291,196 @@ By Bayes's theorem, according to \eqref{eq:SBM_density}
 and \eqref{eq:CRP_density},
 the posterior distribution of $z$ given $X$ is
 
-\begin{equation*}
+\begin{equation}\label{eq:SBM_posterior}
   p(z \mid X) \propto p(X \mid z) p(z)
-  = \squared{
-  \prod_{1 \leqslant k \leqslant l \leqslant K}
-  \frac{B(m_{k,l}+a, \bar{m}_{k,l}+b)}{B(a,b)}}
-  \squared{\frac{A^{K} \Gamma(A)}{\Gamma(A + N)} \prod_{k=1}^{K} \Gamma(n_k)}.
-\end{equation*}
-We now move to carry out the single site Gibbs method.
-For every $i \in \{1, 2, \ldots, N\}$,
-let $z^{(-i)}$ denote the vector $(z_1, z_2, \ldots, z_{i-1}, z_{i+1}, \ldots, z_N)$
-obtained from $z$ by removing the $i$-th entry.
-We need to compute, for every $i \in \{1, 2, \ldots, N\}$,
-what's proportional to
-
-\begin{equation*}
-  p(z_i \mid z^{(-i)}, X).
-\end{equation*}
-Therefore, for each $k \in \{1, 2, \ldots, K^{(-i)}\}$,
-where $K^{(-i)}$ is the number of non-empty blocks as specified by $z^{(-i)}$,
-we must calculate $p(z_i = k \mid z^{(-i)}, X)$.
-
-\section{Gibbs Draft}
-
-In this section we explain how we understand the conditional distribution
-$p(z_i \mid z^{(-i)}, X)$ used by the single site Gibbs method,
-given that $z$ ranges over the set of partitions $\Pi$
-rather than over a product space such as $\mathbb{R}^N$.
-Throughout the section,
-we fix a vertex $i \in \{1, 2, \ldots, N\}$
-and we regard every $z \in \Pi$ as a set of blocks,
-each block being a non-empty subset of $\{1, 2, \ldots, N\}$.
-The restricted growth string notation is only used to write down
-a partition after it has been updated;
-it plays no role in the update itself.
-
-\subsection*{The partition of the other vertices and where vertex $i$ goes}
-
-Let $\Pi^{(-i)}$ denote the collection of all partitions of the set
-$\{1, 2, \ldots, N\} \setminus \{i\}$.
-Every $z \in \Pi$ induces a partition of the other $N - 1$ vertices,
-namely its restriction
-
-\begin{equation*}
-  T_i(z) = \curly{C \setminus \{i\} : C \in z} \setminus \curly{\varnothing}
-  \in \Pi^{(-i)}.
-\end{equation*}
-For $\rho \in \Pi^{(-i)}$ with $K_\rho$ blocks $B_1, B_2, \ldots, B_{K_\rho}$,
-which we name by their vertex sets rather than by integer labels,
-let
-
-\begin{equation*}
-  \mathcal{C}_\rho = \curly{B_1, B_2, \ldots, B_{K_\rho}, \mathrm{new}}
-\end{equation*}
-be the set of the $K_\rho + 1$ options for vertex $i$:
-join one of the existing blocks of $\rho$, or start a new block.
-For $c \in \mathcal{C}_\rho$, we write $\rho \oplus_i c \in \Pi$
-for the partition obtained from $\rho$ by putting $i$ into $c$, that is,
-
-\begin{equation*}
-  \rho \oplus_i B_k = \bracket{\rho \setminus \{B_k\}} \cup \curly{B_k \cup \{i\}}
-  \quad \text{for } k \in \{1, 2, \ldots, K_\rho\},
-  \qquad
-  \rho \oplus_i \mathrm{new} = \rho \cup \curly{\{i\}}.
-\end{equation*}
-
-\begin{lemma}\label{lem:gibbs_bijection}
-The map $(\rho, c) \mapsto \rho \oplus_i c$ is a bijection from
-$\curly{(\rho, c) : \rho \in \Pi^{(-i)},\ c \in \mathcal{C}_\rho}$
-onto $\Pi$.
-Its inverse sends $z \in \Pi$ to $(T_i(z), c_i(z))$,
-where, writing $C$ for the block of $z$ containing $i$,
-we set $c_i(z) = C \setminus \{i\}$ if $C \neq \{i\}$
-and $c_i(z) = \mathrm{new}$ if $C = \{i\}$.
-\end{lemma}
-
-\begin{proof}
-For every $\rho \in \Pi^{(-i)}$ and $c \in \mathcal{C}_\rho$,
-removing $i$ from $\rho \oplus_i c$ gives back $\rho$,
-and the block of $\rho \oplus_i c$ containing $i$ is $c \cup \{i\}$
-if $c \neq \mathrm{new}$ and $\{i\}$ if $c = \mathrm{new}$,
-so $T_i(\rho \oplus_i c) = \rho$ and $c_i(\rho \oplus_i c) = c$.
-Conversely, for every $z \in \Pi$,
-putting $i$ back into $c_i(z)$ recovers $z$,
-so $T_i(z) \oplus_i c_i(z) = z$.
-\end{proof}
-
-In the coordinates given by Lemma~\ref{lem:gibbs_bijection},
-$\rho = T_i(z)$ plays the role of $z^{(-i)}$
-and $c = c_i(z)$ plays the role of $z_i$.
-Accordingly, for $\rho \in \Pi^{(-i)}$ and $c \in \mathcal{C}_\rho$, we define
-
-\begin{equation}\label{eq:gibbs_conditional}
-  p(z_i = c \mid z^{(-i)} = \rho, X)
-  = \frac{p(\rho \oplus_i c \mid X)}
-  {\sum_{c' \in \mathcal{C}_\rho} p(\rho \oplus_i c' \mid X)}
-  \propto p(X \mid \rho \oplus_i c)\, p(\rho \oplus_i c).
+  \propto \squared{
+  \prod_{k,l \in z} \frac{B(m_{k,l}+a, \bar{m}_{k,l}+b)}{B(a,b)}}
+  \squared{A^{\abs{z}} \prod_{k \in z} \Gamma(n_k)}.
 \end{equation}
-This is a probability distribution over the $K_\rho + 1$ options in $\mathcal{C}_\rho$,
-not over integer labels: no block label appears anywhere.
-If $i$ forms a block on its own in the current state $z$,
-then $T_i(z)$ has one block fewer than $z$
-and the current state corresponds to the option $c = \mathrm{new}$;
-this case needs no special treatment.
+We remark that the $B(a,b)$ term in the denominator 
+should not go to the normalizing constant:
+it gets multiplied by $\abs{z}(\abs{z}+1)/2$ times.
 
-\begin{remark}
-The single site Gibbs update for vertex $i$ is the Markov kernel on $\Pi$ given by
+\section{The Single Site Systematic Scan Gibbs Suggested in \cite{Schmidt_Morup_2013}}
+\label{sec:gibbs}
+
+We now present the single site systematic scan Gibbs method 
+with the goal being sampling from \eqref{eq:SBM_posterior}.
+
+\section{Justifications}
+
+We now justify that the method presented in 
+Section~\ref{sec:gibbs} indeed corresponds 
+to the single site systematic scan Gibbs sampler
+in a slightly different space.
+
+Classically speaking, the single site systematic scan Gibbs sampler
+refers to a solution of the following problem:
+suppose that we wish to sample 
+from a probability measure $\pi(\theta)$
+on a $\sigma$-finite space $(\Theta, F_{\Theta}, \mu)$
+defined by a desnity $\mathrm{d}\pi(\theta) = p(\theta) \mathrm{d}\mu(\theta)$.
+If it happens that $\Theta$ is a product space (i.e. $ \Theta= \Theta_1 \times \cdots \Theta_N$
+and $\mu = \mu_1 \times \cdots \times \mu_N$)
+and the full conditional distributions $p(\theta_i \mid \theta_{(-i)})$,
+where $\theta_{(-i)} = (\theta_1, \ldots, \theta_{i-1}, \theta_{i+1}, \ldots, \theta_N)$,
+can be sampled,
+then the \textit{single site systematic scan Gibbs sampler}
+samples $\pi$ by iteratively sampling at each coordinate 
+and standard theory covers its qualitative convergence results
+\cite{Robert_Casella_2004}.
+
+The problem here is that, when $\Theta$ is the collection of all partitions 
+of $\{1, \ldots, N\}$, it is entirely unclear how $\Theta$ can be written as a product space
+$\prod_{i=1}^N \Theta_i$, where $\Theta_i$ corresponds to the vertex $i$.
+If we simply represent each $z \in \Theta$ using the restricted growth notation,
+then the vector $z_{(-i)}$ obtained by simply cropping the $i$th entry 
+is no longer in the restricted growth notation and further analysis based 
+on this notation is invalid.
+
+(Here is a clean and slightly annoying solution I was able to find.)
+
+Instead of working on $\Theta$, we work on an augmented version of it.
+Let us define:
 
 \begin{equation*}
-  P_i(z, z') = \frac{p(z' \mid X)}{\sum_{z'' \in \Pi : T_i(z'') = T_i(z)} p(z'' \mid X)}
-  \, \mathbf{1}\curly{T_i(z') = T_i(z)},
-  \qquad z, z' \in \Pi,
+  \tilde{\Theta} = \prod_{i=1}^{N} \tilde{\Theta}_i = \{1, \ldots, N\}^N,
 \end{equation*}
-that is, we keep $\rho = T_i(z)$ fixed and redraw $c$
-according to \eqref{eq:gibbs_conditional}.
-If $T_i(z) = T_i(z')$, then both $p(z \mid X) P_i(z, z')$ and
-$p(z' \mid X) P_i(z', z)$ are equal to $p(z \mid X) p(z' \mid X)$
-divided by the same normalizing sum,
-and otherwise both vanish.
-Hence $P_i$ is reversible with respect to $p(\cdot \mid X)$.
-No coordinates, linear structure or topology on $\Pi$ are needed for this.
-\end{remark}
-
-\subsection*{Vertex $i$ as the last vertex to arrive}
-
-For a permutation $\sigma$ of $\{1, 2, \ldots, N\}$,
-write $\sigma(z) = \curly{\sigma(C) : C \in z}$
-and let $X^\sigma$ be the adjacency matrix given by
-$X^\sigma_{\sigma(j), \sigma(l)} = X_{j,l}$.
-The CRP density \eqref{eq:CRP_density} depends on $z$ only through
-$K$ and the block sizes, so $p(\sigma(z)) = p(z)$.
-Likewise, the density \eqref{eq:SBM_density} depends on $(X, z)$ only through
-the numbers of edges and non-edges between blocks,
-which do not change when the vertices of $X$ and $z$ are permuted together,
-so $p(X^\sigma \mid \sigma(z)) = p(X \mid z)$.
-Hence the posterior does not care about the order of the vertices,
-and in \eqref{eq:gibbs_conditional} we may pretend that $i$ is the $N$-th vertex
-to arrive, even when $i = 1$.
-The computations below confirm this picture:
-the conditional distribution \eqref{eq:gibbs_conditional} factors as
+$F_{\tilde{\Theta}} = 2^{\tilde{\Theta}}$,
+and 
+$\mu_i$ be the counting measure on $\tilde{\Theta}_i = \{1, \ldots, N\}$.
+For each $c = (c_1, \ldots, c_N) \in \tilde{\Theta}$
+and $i \in \{1, \ldots, N\}$,
+let $c_{(-i)} = (c_1, \ldots, c_{i-1}, c_{i+1}, \ldots, c_N)$
+really be the vector cropping out the $i$th coordinate.
+For each $l \in \{1, \ldots, N\}$,
+let us write $(l, c_{(-i)})$ for the vector $(c_1, \ldots, c_{i-1},l, c_{i+1}, \ldots, c_N)$,
+filling $l$ to the $i$th place.
+A map $\Pi : \tilde{\Theta} \to \Theta$ can be defined 
+by setting $\Pi(c)$ to be the partition which $c$ represents,
+in the way discussed as in Section~\ref{sec:basic_setup}.
+If $p(z)$ is any density on $\Theta$ (with respect to the counting measure),
+then 
 
 \begin{equation*}
-  p(z_i = c \mid z^{(-i)} = \rho, X)
-  \propto
-  \squared{\text{CRP seating probability of the last vertex}}
-  \times
-  \squared{\text{how well the edges of $i$ fit $c$}}.
+  \tilde{p}(c) = \frac{(N-\abs{\Pi(c)})!}{N!}p(\Pi(c))
 \end{equation*}
+is a density with respect to $\mu$ on $(\tilde{\Theta}, F_{\tilde{\Theta}}, \mu)$
+with $C \sim \tilde{p}$ implying $\Pi(C)\sim p$.
 
-\paragraph{Prior part.}
-For every block $B$ of $\rho$, write $n_B = |B|$.
-Since $\Gamma(n_B + 1) = n_B \Gamma(n_B)$ and $\Gamma(1) = 1$,
-\eqref{eq:CRP_density} gives
+Let us reformulate the model with parameter space being the augmented space.
+In this way, the model is no longer identifiable and \eqref{eq:SBM_density}
+now reads
+
+\begin{equation}\label{eq:SBM_density_c}
+  p(X \mid c)  =
+  \prod_{k, l \in \Pi(c)} 
+  \frac{B(m_{k,l}+a, \bar{m}_{k,l}+b)}{B(a,b)}.
+\end{equation}
+The prior \eqref{eq:CRP_density} now becomes
+
+\begin{equation}\label{eq:CRP_density_c}
+ \tilde{p}(c) = \frac{(N-\abs{\Pi(c)})!}{N!}
+ \frac{A^{\abs{\Pi(c)}} \Gamma(A)}{\Gamma(A + N)} \prod_{k \in \Pi(c)} \Gamma(n_k).
+\end{equation}
+The posterior \eqref{eq:SBM_posterior} now becomes
+
+\begin{equation}\label{eq:SBM_posterior_c}
+  \tilde{p}(c \mid X) 
+  \propto \frac{(N-\abs{\Pi(c)})!}{N!} \squared{
+  \prod_{k,l \in \Pi(c)} \frac{B(m_{k,l}+a, \bar{m}_{k,l}+b)}{B(a,b)}}
+  \squared{A^{\abs{\Pi(c)}} \prod_{k \in \Pi(c)} \Gamma(n_k)}.
+\end{equation}
+We now proceed to compute the full conditional probabilities.
+Given the clear product space structure, we separate 
+$c = (c_i, c_{(-i)})$ without worry. We have, for each $l \in \{1, \ldots, N\}$:
 
 \begin{equation*}
-  p(\rho \oplus_i B) = \frac{A^{K_\rho} \Gamma(A)}{\Gamma(A + N)}
-  \prod_{B' \in \rho} \Gamma(n_{B'}) \cdot n_B,
-  \qquad
-  p(\rho \oplus_i \mathrm{new}) = \frac{A^{K_\rho} \Gamma(A)}{\Gamma(A + N)}
-  \prod_{B' \in \rho} \Gamma(n_{B'}) \cdot A,
+  \tilde{p}(c_i = l \mid c_{(-i)}, X)  = 
+  \frac{\tilde{p}(X \mid c_i = l,c_{(-i)}) \tilde{p}(c_i = l \mid c_{(-i)}) \tilde{p}(c_{(-i)})}{
+    \tilde{p}(c_{(-i)}, X)} \propto \tilde{p}(X \mid c_i = l,c_{(-i)}) \tilde{p}(c_i = l \mid c_{(-i)}).
 \end{equation*}
-where the second identity uses that $\rho \oplus_i \mathrm{new}$
-has $K_\rho + 1$ blocks.
-Hence
+Therefore, the only thing left is to compute these two terms.
+
+To compute $\tilde{p}(c_i = l \mid c_{(-i)})$, 
+we use the joint distribution $\tilde{p}(l,c_{(-i)})$ given in \eqref{eq:CRP_density_c},
+which requires some notations. 
+Let us write $\Pi(c_{(-i)})$ for the partition 
+of the set $\{1, \ldots, i-1, i+1, \ldots, N\}$
+obtained by starting with $\Pi(c)$ and deleting vertex $i$ (if the action 
+creates an empty block, delete the empty block as well)
+and, for each $k \in \Pi(c_{(-i)})$, $n_k^{(-i)}$ for the number 
+of vertices in block $k$.
+It is clear that $\sum_{k \in \Pi(c_{(-i)})} n_k^{(-i)} = N-1$ because the vertex $i$ 
+is not in any $k \in \Pi(c_{(-i)})$.
+We now discuss by cases.
+If the choice $c_i=l$ create a new block from $\Pi(c_{(-i)})$
+(that is, $\abs{\Pi(l, c_{(-i)})} = \abs{\Pi(c_{(-i)})} + 1$),
+then 
 
 \begin{equation*}
-  p(\rho \oplus_i c) \propto
+  \tilde{p}(l,c_{(-i)}) = 
+  \frac{(N-\abs{\Pi(c_{(-i)})}-1)!}{N!}
+ \frac{A^{\abs{\Pi(c_{(-i)})}+1} \Gamma(A)}{\Gamma(A + N)} \times \Gamma(1) \times \prod_{k \in \Pi(c_{(-i)})} \Gamma(n_k^{(-i)})
+ = \frac{A}{N - \abs{\Pi(c_{(-i)})}} q(c_{(-i)}),
+\end{equation*}
+where 
+
+\begin{equation*}
+  q(c_{(-i)}) = \frac{(N-\abs{\Pi(c_{(-i)})})!}{N!} \frac{A^{\abs{\Pi(c_{(-i)})}} 
+  \Gamma(A)}{\Gamma(A + N)} \prod_{k \in \Pi(c_{(-i)})} \Gamma(n_k^{(-i)}).
+\end{equation*}
+Secondly, suppose that the choice $c_i=l$ enters an existing block from $\Pi(c_{(-i)})$,
+say inside a block $r \in \Pi(c_{(-i)})$.
+In this case, we have $\abs{\Pi(l, c_{(-i)})} = \abs{\Pi(c_{(-i)})}$,
+
+\begin{equation*}
+  \tilde{p}(l,c_{(-i)}) = 
+  \frac{(N-\abs{\Pi(c_{(-i)})})!}{N!}
+ \frac{A^{\abs{\Pi(c_{(-i)})}} \Gamma(A)}{\Gamma(A + N)} \times \Gamma(n_r^{(-i)}+1) \times \prod_{k \in \Pi(c_{(-i)}), k \neq r} \Gamma(n_k^{(-i)})
+ = n_r^{(-i)} q(c_{(-i)}).
+\end{equation*}
+We can thus combine the two cases and observe that, in the formula
+of $\tilde{p}(l,c_{(-i)})$, the block which $l$ belongs will determine what 
+is multiplied to $q(c_{(-i)})$ and this is the only thing that depends on $l$.
+We thus conclude that 
+
+\begin{equation}\label{eq:c_l_conditional_prior}
+  \tilde{p}(c_i = l \mid c_{(-i)}) =  \frac{1}{A+N-1}
   \begin{cases}
-    n_B & \text{if } c = B \in \rho, \\
-    A & \text{if } c = \mathrm{new}.
-  \end{cases}
-\end{equation*}
-Since $\sum_{B \in \rho} n_B = N - 1$,
-the normalized weights are $n_B / (A + N - 1)$ and $A / (A + N - 1)$,
-which are exactly the CRP probabilities for the $N$-th vertex
-to join block $B$ or to create a new block.
-
-\paragraph{Likelihood part.}
-Write $X^{(-i)} = (X_{j,l})_{1 \leqslant j < l \leqslant N,\ j, l \neq i}$
-for the graph with vertex $i$ removed
-and $x_i = (X_{i,j})_{j \neq i}$ for the edges of vertex $i$.
-For blocks $B, B'$ of $\rho$ (with $B = B'$ allowed),
-let $m_{B,B'}$ and $\bar{m}_{B,B'}$ be the numbers of edges and non-edges
-between $B$ and $B'$ in $X^{(-i)}$,
-where each unordered pair of distinct vertices is counted once
-(so that, when $B = B'$, these are the pairs of vertices inside $B$).
-For every block $B'$ of $\rho$, let
-
-\begin{equation*}
-  r_{B'} = \sum_{j \in B'} X_{i,j}
-\end{equation*}
-be the number of edges between $i$ and $B'$,
-so that there are $n_{B'} - r_{B'}$ non-edges between $i$ and $B'$.
-Finally, let
-
-\begin{equation*}
-  p(X^{(-i)} \mid \rho) = \prod_{\{B, B'\}}
-  \frac{B(m_{B,B'} + a, \bar{m}_{B,B'} + b)}{B(a,b)},
-\end{equation*}
-where the product ranges over all unordered pairs $\{B, B'\}$ of blocks of $\rho$
-with $B = B'$ allowed;
-this is the right-hand side of \eqref{eq:SBM_density}
-applied to the graph $X^{(-i)}$ and the partition $\rho$.
-
-\begin{proposition}\label{prop:gibbs_likelihood}
-For every block $B$ of $\rho$,
-
-\begin{equation*}
-  p(X \mid \rho \oplus_i B) = p(X^{(-i)} \mid \rho)
-  \prod_{B' \in \rho}
-  \frac{B(m_{B,B'} + r_{B'} + a, \bar{m}_{B,B'} + n_{B'} - r_{B'} + b)}
-  {B(m_{B,B'} + a, \bar{m}_{B,B'} + b)},
-\end{equation*}
-and
-
-\begin{equation*}
-  p(X \mid \rho \oplus_i \mathrm{new}) = p(X^{(-i)} \mid \rho)
-  \prod_{B' \in \rho}
-  \frac{B(r_{B'} + a, n_{B'} - r_{B'} + b)}{B(a,b)}.
-\end{equation*}
-\end{proposition}
-
-\begin{proof}
-The blocks of $\rho \oplus_i B$ are $B \cup \{i\}$ and the blocks
-$B' \neq B$ of $\rho$.
-Pairs of vertices not involving $i$ are counted exactly as in $\rho$.
-For every $B' \in \rho$, the $n_{B'}$ pairs $\{i, j\}$ with $j \in B'$
-fall into the block pair $\{B \cup \{i\}, B'\}$ if $B' \neq B$,
-and into the block pair $\{B \cup \{i\}, B \cup \{i\}\}$ if $B' = B$;
-in both cases they add $r_{B'}$ edges and $n_{B'} - r_{B'}$ non-edges
-to the counts $m_{B,B'}$ and $\bar{m}_{B,B'}$.
-So, in \eqref{eq:SBM_density}, only the factors of the block pairs
-containing $B \cup \{i\}$ change,
-there is exactly one such factor for each $B' \in \rho$,
-and dividing each new factor by the corresponding factor of $p(X^{(-i)} \mid \rho)$
-gives the first identity.
-The blocks of $\rho \oplus_i \mathrm{new}$ are $\{i\}$ and the blocks of $\rho$.
-The block pairs of $\rho$ keep their counts,
-the block pair $\{\{i\}, B'\}$ receives $r_{B'}$ edges and $n_{B'} - r_{B'}$ non-edges
-for every $B' \in \rho$,
-and the block pair $\{\{i\}, \{i\}\}$ contains no pair of vertices,
-so its factor is $B(a,b)/B(a,b) = 1$.
-This gives the second identity.
-\end{proof}
-
-The factor $p(X^{(-i)} \mid \rho)$ is the same for every $c \in \mathcal{C}_\rho$
-and therefore drops out of \eqref{eq:gibbs_conditional}.
-Since the marginal distribution of $X^{(-i)}$ under $\rho \oplus_i c$
-is the SBM with partition $\rho$
-(it only involves pairs of vertices not containing $i$),
-the remaining product is the conditional probability
-$p(x_i \mid X^{(-i)}, \rho \oplus_i c)$ of the edges of $i$ given the rest of the graph.
-Each of its factors is a Beta--Bernoulli posterior predictive probability:
-in the hierarchical formulation of \cite{Schmidt_Morup_2013},
-the link probability $\theta_{B,B'}$ between blocks $B$ and $B'$
-has prior $\text{Beta}(a,b)$,
-its posterior given $X^{(-i)}$ is $\text{Beta}(m_{B,B'} + a, \bar{m}_{B,B'} + b)$,
-and
-
-\begin{equation*}
-  \frac{B(m_{B,B'} + r_{B'} + a, \bar{m}_{B,B'} + n_{B'} - r_{B'} + b)}
-  {B(m_{B,B'} + a, \bar{m}_{B,B'} + b)}
-\end{equation*}
-is the probability, under this posterior, of the particular configuration of
-$r_{B'}$ edges and $n_{B'} - r_{B'}$ non-edges between $i$ and $B'$.
-For a new block there is no previous observation,
-so the posterior is simply the prior $\text{Beta}(a,b)$.
-These are exactly the quantities computed (on the logarithmic scale)
-in the code of \cite{Schmidt_Morup_2013}.
-
-\paragraph{Conclusion.}
-Combining the prior part with Proposition~\ref{prop:gibbs_likelihood},
-for every $\rho \in \Pi^{(-i)}$ we obtain
-
-\begin{equation}\label{eq:gibbs_conditional_explicit}
-  p(z_i = c \mid z^{(-i)} = \rho, X) \propto
-  \begin{cases}
-    \displaystyle n_B \prod_{B' \in \rho}
-    \frac{B(m_{B,B'} + r_{B'} + a, \bar{m}_{B,B'} + n_{B'} - r_{B'} + b)}
-    {B(m_{B,B'} + a, \bar{m}_{B,B'} + b)}
-    & \text{if } c = B \in \rho, \\[4ex]
-    \displaystyle A \prod_{B' \in \rho}
-    \frac{B(r_{B'} + a, n_{B'} - r_{B'} + b)}{B(a,b)}
-    & \text{if } c = \mathrm{new},
+    n_r^{(-i)} \tab[4.1cm] \text{$l$ enters block $r \in \Pi(c_{(-i)})$},\\
+    \frac{A}{N - \abs{\Pi(c_{(-i)})}} \tab[3cm] \text{$l$ creates a new block}.
   \end{cases}
 \end{equation}
-where the proportionality constant is fixed by summing over
-the $K_\rho + 1$ options in $\mathcal{C}_\rho$.
-In words, $p(z_i \mid z^{(-i)}, X)$ is the probability that vertex $i$
-joins each block of $\rho$, or starts a new one,
-given the partition $\rho$ of the other vertices:
-it is the CRP seating weight ($n_B$ or $A$)
-times the posterior predictive likelihood of the edges of $i$ under that choice,
-normalized over the $K_\rho + 1$ options.
-This description never uses $\mathbb{R}^N$ or block labels.
-After drawing $c$, we write the new state $\rho \oplus_i c$
-in restricted growth string notation.
+It can be verified directly that this is a proper density:
+\begin{equation*}
+  \sum_{l=1}^{N} \tilde{p}(c_i = l \mid c_{(-i)})
+  = \frac{1}{A+N-1} \bracket{\bracket{N - \abs{\Pi(c_{(-i)})}} \frac{A}{N - \abs{\Pi(c_{(-i)})}} + 
+  \sum_{r \in \Pi(c_{(-i)})} n_r^{(-i)}}
+  = \frac{A + N - 1}{A + N - 1} = 1.
+\end{equation*}
+
+To compute $\tilde{p}(X \mid c_i = l,c_{(-i)})$, we use 
+\eqref{eq:SBM_density_c} and again discuss by cases.
+We introduce a bit more notations. 
+First, let $X_{(-i)}$ be the graph deleting the vertex $i$ along 
+with edges connecting $i$ to other vertices (in the density 
+formula, this simply stands for all edges and non-edges with ends not being $i$)
+and let 
+
+
+
+
+
+
+
+
+
+
+
+\section{Next Steps}
+
+To proceed
 
 \bibliographystyle{plainnat}
 \def\bibname{References} % Nom obligatoire de la section des références.

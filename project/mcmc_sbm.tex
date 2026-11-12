@@ -153,11 +153,11 @@ using Bayesian stochastic block model with single
 site Gibbs procedure seems to have been first 
 mentioned in \cite{Kemp_et_al_2004}
 and slightly later in \cite{Xu_et_al_2006}.
-In this section, we
+In this chapter, we
 describe the simplest setup of both the model and the single site Gibbs method
 by following a tutorial article \cite{Schmidt_Morup_2013}.
 We will fill in the missing steps and justify that the proposed method 
-is indeed the standard single site systamatic scan Gibbs method.
+is indeed the standard single site systematic scan Gibbs method.
 
 \section{The Bayesian Stochastic Block Model}\label{sec:basic_setup}
 
@@ -304,8 +304,98 @@ it gets multiplied by $\abs{z}(\abs{z}+1)/2$ times.
 \section{The Single Site Systematic Scan Gibbs Suggested in \cite{Schmidt_Morup_2013}}
 \label{sec:gibbs}
 
-We now present the single site systematic scan Gibbs method 
-with the goal being sampling from \eqref{eq:SBM_posterior}.
+We present in this section the single site 
+systematic scan Gibbs method suggested in \cite{Schmidt_Morup_2013}.
+The method produces a sequence of partitions
+$z^{(0)}, z^{(1)}, z^{(2)}, \ldots \in \Theta$,
+where $z^{(0)}$ is an initial partition
+and $z^{(t)}$ is the partition obtained after $t$ sweeps.
+In each sweep, the vertices $1, 2, \ldots, N$ are visited in this fixed order,
+and the visited vertex is reassigned to a block
+while the blocks of all the other vertices are kept fixed.
+
+To describe one such reassignment,
+let $z \in \Theta$ be the current partition
+and let $i \in \{1, \ldots, N\}$ be the vertex being visited.
+We write $z^{\setminus i}$ for the partition of $\{1, \ldots, N\} \setminus \{i\}$
+obtained from $z$ by removing vertex $i$ from its block
+(and discarding this block if it becomes empty).
+For blocks $k, l \in z^{\setminus i}$, we write
+\begin{itemize}
+  \item $n_k^{\setminus i}$ for the number of vertices in block $k$;
+  \item $r_{i,k} = \sum_{j \in k} X_{i,j}$ for the number of edges between vertex $i$ and block $k$;
+  \item $m_{k,l}^{\setminus i}$($\bar{m}_{k,l}^{\setminus i}$) for the number of edges(non-edges)
+  between block $k$ and block $l$, not counting vertex $i$, that is,
+\end{itemize}
+
+\begin{equation*}
+  m_{k,l}^{\setminus i} =
+  \begin{cases}
+    \displaystyle \sum_{j \in k} \sum_{j' \in l} X_{j,j'}, & k \neq l, \\[1.2em]
+    \displaystyle \sum_{j, j' \in k,\, j < j'} X_{j,j'}, & k = l,
+  \end{cases}
+  \qquad
+  \bar{m}_{k,l}^{\setminus i} =
+  \begin{cases}
+    n_k^{\setminus i} n_l^{\setminus i} - m_{k,l}^{\setminus i}, & k \neq l, \\[0.5em]
+    \frac{1}{2} n_k^{\setminus i} (n_k^{\setminus i} - 1) - m_{k,l}^{\setminus i}, & k = l.
+  \end{cases}
+\end{equation*}
+The vertex $i$ is then either put into an existing block $k \in z^{\setminus i}$
+or put into a new block $\{i\}$ of its own.
+(In particular, if $\{i\}$ is a block of $z$, keeping vertex $i$ alone counts as the second option.)
+The choice of joining the existing block $k \in z^{\setminus i}$ is given the unnormalized weight
+
+\begin{equation}\label{eq:SM_weight_existing}
+  w_k = n_k^{\setminus i}
+  \prod_{l \in z^{\setminus i}}
+  \frac{B(m_{k,l}^{\setminus i} + r_{i,l} + a, \, \bar{m}_{k,l}^{\setminus i} + n_l^{\setminus i} - r_{i,l} + b)}{B(m_{k,l}^{\setminus i} + a, \, \bar{m}_{k,l}^{\setminus i} + b)},
+\end{equation}
+and the choice of creating a new block is given the unnormalized weight
+
+\begin{equation}\label{eq:SM_weight_new}
+  w_{\text{new}} = A
+  \prod_{l \in z^{\setminus i}}
+  \frac{B(r_{i,l} + a, \, n_l^{\setminus i} - r_{i,l} + b)}{B(a, b)}.
+\end{equation}
+The block of vertex $i$ is then drawn from the categorical distribution proportional to these weights:
+vertex $i$ joins block $k \in z^{\setminus i}$ with probability $w_k / W$
+and creates a new block with probability $w_{\text{new}} / W$, where
+$W = w_{\text{new}} + \sum_{k \in z^{\setminus i}} w_k$.
+In \cite{Schmidt_Morup_2013}, this categorical distribution is presented as the
+conditional distribution of the block of vertex $i$ given the blocks of all the other vertices and $X$.
+
+The full procedure reads as follows.
+\begin{enumerate}
+  \item \textbf{Initialization.} Choose an initial partition $z^{(0)} \in \Theta$
+  and a total number $2T$ of sweeps.
+  In the implementation of \cite{Schmidt_Morup_2013},
+  all vertices start in one single block, that is, $z^{(0)} = \{\{1, \ldots, N\}\}$.
+  \item \textbf{Sweeps.} For $t = 1, 2, \ldots, 2T$:
+  set $z = z^{(t-1)}$ and, for $i = 1, 2, \ldots, N$ in turn,
+  \begin{enumerate}
+    \item compute $z^{\setminus i}$ and, for all $k, l \in z^{\setminus i}$,
+    the quantities $n_l^{\setminus i}$, $r_{i,l}$, $m_{k,l}^{\setminus i}$ and $\bar{m}_{k,l}^{\setminus i}$
+    from the current $z$;
+    \item compute the weights $w_k$, $k \in z^{\setminus i}$, by \eqref{eq:SM_weight_existing}
+    and $w_{\text{new}}$ by \eqref{eq:SM_weight_new};
+    \item draw the block of vertex $i$ from the categorical distribution described above;
+    \item replace $z$ by the resulting partition, namely
+    $z^{\setminus i}$ with block $k$ replaced by $k \cup \{i\}$ if block $k$ is drawn,
+    and $z^{\setminus i} \cup \{\{i\}\}$ if a new block is drawn.
+  \end{enumerate}
+  After vertex $N$ has been visited, set $z^{(t)} = z$.
+  \item \textbf{Output.} Discard the first half $z^{(1)}, \ldots, z^{(T)}$ as burn-in
+  and use $z^{(T+1)}, \ldots, z^{(2T)}$ as approximate samples
+  from the posterior distribution \eqref{eq:SBM_posterior}.
+\end{enumerate}
+In the implementation of \cite{Schmidt_Morup_2013},
+the weights are computed on the logarithmic scale (via the logarithm of the beta function),
+and the largest log weight is subtracted from all log weights
+before exponentiating and normalizing.
+
+
+
 
 \section{Justifications}
 
@@ -319,8 +409,8 @@ refers to a solution of the following problem:
 suppose that we wish to sample 
 from a probability measure $\pi(\theta)$
 on a $\sigma$-finite space $(\Theta, F_{\Theta}, \mu)$
-defined by a desnity $\mathrm{d}\pi(\theta) = p(\theta) \mathrm{d}\mu(\theta)$.
-If it happens that $\Theta$ is a product space (i.e. $ \Theta= \Theta_1 \times \cdots \Theta_N$
+defined by a density $\mathrm{d}\pi(\theta) = p(\theta) \mathrm{d}\mu(\theta)$.
+If it happens that $\Theta$ is a product space (i.e. $ \Theta= \Theta_1 \times \cdots \times \Theta_N$
 and $\mu = \mu_1 \times \cdots \times \mu_N$)
 and the full conditional distributions $p(\theta_i \mid \theta_{(-i)})$,
 where $\theta_{(-i)} = (\theta_1, \ldots, \theta_{i-1}, \theta_{i+1}, \ldots, \theta_N)$,
@@ -338,7 +428,7 @@ then the vector $z_{(-i)}$ obtained by simply cropping the $i$th entry
 is no longer in the restricted growth notation and further analysis based 
 on this notation is invalid.
 
-(Here is a clean and slightly annoying solution I was able to find.)
+(Here is a clean but slightly annoying solution I was able to find.)
 
 Instead of working on $\Theta$, we work on an augmented version of it.
 Let us define:
@@ -373,8 +463,8 @@ In this way, the model is no longer identifiable and \eqref{eq:SBM_density}
 now reads
 
 \begin{equation}\label{eq:SBM_density_c}
-  p(X \mid c)  =
-  \prod_{k, l \in \Pi(c)} 
+  \tilde{p}(X \mid c)  =
+  \prod_{k, l \in \Pi(c)}
   \frac{B(m_{k,l}+a, \bar{m}_{k,l}+b)}{B(a,b)}.
 \end{equation}
 The prior \eqref{eq:CRP_density} now becomes
@@ -395,11 +485,11 @@ We now proceed to compute the full conditional probabilities.
 Given the clear product space structure, we separate 
 $c = (c_i, c_{(-i)})$ without worry. We have, for each $l \in \{1, \ldots, N\}$:
 
-\begin{equation*}
+\begin{equation}\label{eq:c_i_l_conditional}
   \tilde{p}(c_i = l \mid c_{(-i)}, X)  = 
   \frac{\tilde{p}(X \mid c_i = l,c_{(-i)}) \tilde{p}(c_i = l \mid c_{(-i)}) \tilde{p}(c_{(-i)})}{
     \tilde{p}(c_{(-i)}, X)} \propto \tilde{p}(X \mid c_i = l,c_{(-i)}) \tilde{p}(c_i = l \mid c_{(-i)}).
-\end{equation*}
+\end{equation}
 Therefore, the only thing left is to compute these two terms.
 
 To compute $\tilde{p}(c_i = l \mid c_{(-i)})$, 
@@ -414,7 +504,7 @@ of vertices in block $k$.
 It is clear that $\sum_{k \in \Pi(c_{(-i)})} n_k^{(-i)} = N-1$ because the vertex $i$ 
 is not in any $k \in \Pi(c_{(-i)})$.
 We now discuss by cases.
-If the choice $c_i=l$ create a new block from $\Pi(c_{(-i)})$
+If the choice $c_i=l$ creates a new block from $\Pi(c_{(-i)})$
 (that is, $\abs{\Pi(l, c_{(-i)})} = \abs{\Pi(c_{(-i)})} + 1$),
 then 
 
@@ -463,20 +553,89 @@ It can be verified directly that this is a proper density:
 To compute $\tilde{p}(X \mid c_i = l,c_{(-i)})$, we use 
 \eqref{eq:SBM_density_c} and again discuss by cases.
 We introduce a bit more notations. 
-First, let $X_{(-i)}$ be the graph deleting the vertex $i$ along 
-with edges connecting $i$ to other vertices (in the density 
-formula, this simply stands for all edges and non-edges with ends not being $i$)
-and let 
+For each $s, t \in \Pi(l, c_{(-i)})$,
+let us write $m_{s,t}(l, c_{(-i)})$($\bar{m}_{s,t}(l, c_{(-i)})$)
+for the number of edges(non-edges) between block $s$ and block $t$ in the graph $X$ 
+when vertex $i$ is assigned to block $l$.
+Also, let $m_{s,t}(c_{(-i)})$($\bar{m}_{s,t}(c_{(-i)})$)
+be the number of edges(non-edges) between block $s$ and block $t$
+in the graph $X$ when vertex $i$ is deleted (along with edges connecting $i$ to other vertices),
+which is $0$ if block $s$ or block $t$ becomes empty.
+If the choice $c_i=l$ creates a new block (called just $l$) from $\Pi(c_{(-i)})$,
+then \eqref{eq:SBM_density_c} reads (the factor for the pair $\{l, l\}$ equals $B(a,b)/B(a,b) = 1$ and is omitted)
 
+\begin{equation*}
+  \begin{split}
+  \tab[0.4cm] & \tilde{p}(X \mid c_i = l,c_{(-i)}) \\ & = 
+  \squared{\prod_{s, t \in \Pi(c_{(-i)})} 
+  \frac{B(m_{s,t}(l,c_{(-i)})+a, \bar{m}_{s,t}(l,c_{(-i)})+b)}{B(a,b)}}
+  \squared{\prod_{s \in \Pi(c_{(-i)})} 
+  \frac{B(m_{s,l}(l, c_{(-i)})+a, \bar{m}_{s,l}(l, c_{(-i)})+b)}{B(a,b)}}
+  \\ & =
+  \squared{\prod_{s, t \in \Pi(c_{(-i)})} 
+  \frac{B(m_{s,t}(c_{(-i)})+a, \bar{m}_{s,t}(c_{(-i)})+b)}{B(a,b)}}
+  \\ & \squared{\prod_{s \in \Pi(c_{(-i)})}
+  \frac{B(m_{s,l}(c_{(-i)})+e^i_s+a, \bar{m}_{s,l}(c_{(-i)})+n_s^{(-i)} - e^i_s+b)}{B(a,b)}}
+  \\ & =
+  \squared{\prod_{s, t \in \Pi(c_{(-i)})} 
+  \frac{B(m_{s,t}(c_{(-i)})+a, \bar{m}_{s,t}(c_{(-i)})+b)}{B(a,b)}}
+  \squared{\prod_{s \in \Pi(c_{(-i)})}
+  \frac{B(e^i_s+a,n_s^{(-i)} - e^i_s+b)}{B(a,b)}},
+  \end{split}
+\end{equation*}
+where $e^i_s$ is the number of edges between vertex $i$ and block $s$ in the graph $X$
+and $n_s^{(-i)}$ is the number of vertices in block $s$ without the vertex $i$.
+In the last equality, we have used the fact that $m_{s,l}(c_{(-i)}) = \bar{m}_{s,l}(c_{(-i)}) = 0$
+because block $l$ is empty once vertex $i$ is deleted.
+Secondly, suppose that the choice $c_i=l$ enters an existing block from $\Pi(c_{(-i)})$,
+say inside a block $r \in \Pi(c_{(-i)})$, then \eqref{eq:SBM_density_c} reads
 
+\begin{equation*}
+  \begin{split}
+  \tab[0.4cm] & \tilde{p}(X \mid c_i = l,c_{(-i)}) \\ & = 
+  \squared{\prod_{s, t \in \Pi(c_{(-i)}), s \neq r, t \neq r} 
+  \frac{B(m_{s,t}(l,c_{(-i)})+a, \bar{m}_{s,t}(l,c_{(-i)})+b)}{B(a,b)}}
+  \\ & \squared{\prod_{s \in \Pi(c_{(-i)})}
+  \frac{B(m_{s,r}(l, c_{(-i)})+a, \bar{m}_{s,r}(l, c_{(-i)})+b)}{B(a,b)}}
+  \\ & =
+  \squared{\prod_{s, t \in \Pi(c_{(-i)}), s \neq r, t \neq r} 
+  \frac{B(m_{s,t}(c_{(-i)})+a, \bar{m}_{s,t}(c_{(-i)})+b)}{B(a,b)}}
+  \\ & \squared{\prod_{s \in \Pi(c_{(-i)})} 
+  \frac{B(m_{s,r}(c_{(-i)})+e^i_s+a, \bar{m}_{s,r}(c_{(-i)})+n_s^{(-i)} - e^i_s+b)}{B(a,b)}}.
+  \end{split}
+\end{equation*}
+We can thus combine the two cases (block $l$ being $r$ in the second case) to conclude that
 
+\begin{equation}\label{eq:c_l_conditional_likelihood}
+  \tilde{p}(X \mid c_i = l,c_{(-i)}) = L(c_{(-i)})
+  \prod_{s \in \Pi(c_{(-i)})}
+  \frac{B(m_{s,l}(c_{(-i)})+e^i_s+a, \bar{m}_{s,l}(c_{(-i)})+n_s^{(-i)} - e^i_s+b)}{B(m_{s,l}(c_{(-i)})+a, \bar{m}_{s,l}(c_{(-i)})+b)},
+\end{equation}
+where 
 
+\begin{equation*}
+  L(c_{(-i)}) = \prod_{s, t \in \Pi(c_{(-i)})}
+  \frac{B(m_{s,t}(c_{(-i)})+a, \bar{m}_{s,t}(c_{(-i)})+b)}{B(a,b)}
+\end{equation*}
+does not depend on $l$.
 
+Combining \eqref{eq:c_i_l_conditional}, \eqref{eq:c_l_conditional_prior} and \eqref{eq:c_l_conditional_likelihood},
+we see that 
 
-
-
-
-
+\begin{equation*}
+  \begin{split}
+  & \tilde{p}(c_i = l \mid c_{(-i)}, X) \\
+  & \quad \propto
+  \begin{cases}
+    \displaystyle n_r^{(-i)} \prod_{s \in \Pi(c_{(-i)})}
+    \frac{B(m_{s,r}(c_{(-i)})+e^i_s+a, \bar{m}_{s,r}(c_{(-i)})+n_s^{(-i)} - e^i_s+b)}{B(m_{s,r}(c_{(-i)})+a, \bar{m}_{s,r}(c_{(-i)})+b)},
+    & \text{$l$ enters block $r \in \Pi(c_{(-i)})$}, \\[1.5em]
+    \displaystyle \frac{A}{N - \abs{\Pi(c_{(-i)})}} \prod_{s \in \Pi(c_{(-i)})}
+    \frac{B(e^i_s+a, n_s^{(-i)} - e^i_s+b)}{B(a,b)},
+    & \text{$l$ creates a new block}.
+  \end{cases}
+  \end{split}
+\end{equation*}
 
 \section{Next Steps}
 
